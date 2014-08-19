@@ -209,7 +209,7 @@ function decode(buffer) {
   var decoder = new Decoder(buffer);
   var value = decoder.parse();
   decoder.bytesRemaining = decoder.buffer.length - decoder.offset;
-  return value;
+  return {value: value, trailing: decoder.bytesRemaining};
 }
 
 function encodeableKeys (value) {
@@ -558,14 +558,14 @@ var Stream = function(s) {
         // Consume messages from the stream, one by one
         while (self.buf && self.buf.length > 0) {
             var msg = decode(self.buf);
-            if (!msg) {
+            if (!msg.value) {
                 break;
             }
 
-            self.emit('msg', msg);
-            if (decode.bytes_remaining > 0) {
+            self.emit('msg', msg.value);
+            if (msg.trailing > 0) {
                 self.buf = self.buf.slice(
-                    self.buf.length - decode.bytes_remaining,
+                    self.buf.length - msg.trailing,
                     self.buf.length
                 );
             } else {
