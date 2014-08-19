@@ -10,9 +10,9 @@ try {
     sys = require('sys');
 }
 
-exports.encode = encode;
+exports.encode = _encode;
 
-function encode(value) {
+function _encode(value) {
   var size = sizeof(value);
   if (size === 0) return undefined;
   var buffer = bops.create(size);
@@ -531,7 +531,7 @@ var Stream = function(s) {
     // faithfully down to the write() method of the underlying stream.
     self.send = function(m) {
         // Sigh, no arguments.slice() method
-        var args = [encode(m)];
+        var args = [_encode(m)];
 
         for (var i = 1; i < arguments.length; i++) {
             args.push(arguments[i]);
