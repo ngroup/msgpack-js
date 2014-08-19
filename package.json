@@ -1,19 +1,13 @@
 {
-  "author": "Tim Caswell <tim@creationix.com>",
-  "name": "msgpack-js",
+  "author": "Chun Nien <steven.nien@gmail.com>",
+  "name": "neo-msgpack-js",
   "description": "msgpack encoder and decoder in pure javascript",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": {
     "type": "git",
-    "url": "git://github.com/creationix/msgpack-js.git"
+    "url": "git://github.com/ngroup/msgpack-js.git"
   },
   "main": "msgpack.js",
-  "dependencies": {
-    "bops": "~0.0.6"
-  },
-  "devDependencies": {
-    "tape": "~1.0.2"
-  },
   "scripts": {
     "test": "node test.js"
   },
@@ -28,5 +22,11 @@
       "ipad/6"
     ]
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "bops": "^0.1.1"
+  },
+  "devDependencies": {
+    "tape": "^2.14.0"
+  }
 }
