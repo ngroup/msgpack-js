@@ -1,14 +1,24 @@
 "use strict";
 
 var bops = require('bops');
+var buffer = require('buffer');
+var events = require('events');
+var sys;
+try {
+    sys = require('util');
+} catch (e) {
+    sys = require('sys');
+}
 
-exports.encode = function (value) {
+exports.encode = encode;
+
+function encode(value) {
   var size = sizeof(value);
   if (size === 0) return undefined;
   var buffer = bops.create(size);
   encode(value, buffer, 0);
   return buffer;
-};
+}
 
 exports.decode = decode;
 
@@ -24,6 +34,7 @@ exports.decode = decode;
 function Decoder(buffer, offset) {
   this.offset = offset || 0;
   this.buffer = buffer;
+  this.bytesRemaining = buffer.length - this.offset;
 }
 Decoder.prototype.map = function (length) {
   var value = {};
@@ -192,10 +203,12 @@ Decoder.prototype.parse = function () {
   }
   throw new Error("Unknown type 0x" + type.toString(16));
 };
+
+
 function decode(buffer) {
   var decoder = new Decoder(buffer);
   var value = decoder.parse();
-  if (decoder.offset !== buffer.length) throw new Error((buffer.length - decoder.offset) + " trailing bytes");
+  decoder.bytesRemaining = decoder.buffer.length - decoder.offset;
   return value;
 }
 
@@ -504,3 +517,63 @@ function sizeof(value) {
 }
 
 
+var Stream = function(s) {
+    var self = this;
+
+    events.EventEmitter.call(self);
+
+    // Buffer of incomplete stream data
+    self.buf = null;
+
+    // Send a message down the stream
+    //
+    // Allows the caller to pass additional arguments, which are passed
+    // faithfully down to the write() method of the underlying stream.
+    self.send = function(m) {
+        // Sigh, no arguments.slice() method
+        var args = [encode(m)];
+
+        for (var i = 1; i < arguments.length; i++) {
+            args.push(arguments[i]);
+        }
+
+        return s.write.apply(s, args);
+    };
+
+    // Listen for data from the underlying stream, consuming it and emitting
+    // 'msg' events as we find whole messages.
+    s.addListener('data', function(d) {
+        // Make sure that self.buf reflects the entirety of the unread stream
+        // of bytes; it needs to be a single buffer
+        if (self.buf) {
+            var b = new buffer.Buffer(self.buf.length + d.length);
+            self.buf.copy(b, 0, 0, self.buf.length);
+            d.copy(b, self.buf.length, 0, d.length);
+
+            self.buf = b;
+        } else {
+            self.buf = d;
+        }
+
+        // Consume messages from the stream, one by one
+        while (self.buf && self.buf.length > 0) {
+            var msg = decode(self.buf);
+            if (!msg) {
+                break;
+            }
+
+            self.emit('msg', msg);
+            if (decode.bytes_remaining > 0) {
+                self.buf = self.buf.slice(
+                    self.buf.length - decode.bytes_remaining,
+                    self.buf.length
+                );
+            } else {
+                self.buf = null;
+            }
+        }
+    });
+};
+
+sys.inherits(Stream, events.EventEmitter);
+exports.Stream = Stream;
