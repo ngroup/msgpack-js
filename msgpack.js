@@ -225,16 +225,17 @@ Decoder.prototype.parse = function () {
     length = bops.readUInt8(this.buffer, this.offset + 1);
     this.offset += 2;
     return this.str(length);
+  // the str 16 and 32 are handled as raw 16 and raw 32
   // str 16
   case 0xda:
     length = bops.readUInt16BE(this.buffer, this.offset + 1);
     this.offset += 3;
-    return this.str(length);
+    return this.parse();
   // str 32
   case 0xdb:
     length = bops.readUInt32BE(this.buffer, this.offset + 1);
     this.offset += 5;
-    return this.str(length);
+    return this.parse();
   // array 16
   case 0xdc:
     length = bops.readUInt16BE(this.buffer, this.offset + 1);
